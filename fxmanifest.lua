@@ -19,5 +19,10 @@ client_script {
     'client/*.lua'
 }
 
+dependencies {
+    'ox_lib',
+    'arc_core',
+}
+
 lua54 'yes'
 use_fxv2_oal 'yes'
