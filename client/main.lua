@@ -13,9 +13,8 @@ end
 
 local function SelectCharacterModel(input)
   local ped = PlayerPedId()
-  local curScoll = 1 -- Keep track of the currently selected model
+  local curScoll = 1
 
-  -- Register the menu with scroll and confirm functionality
   lib.registerMenu({
     id = 'character_model_selection',
     title = 'Model Selection',
@@ -70,6 +69,43 @@ local function CreateNewCharacter()
   end
 end
 
+local function CreateCharacterManagerContext(coords, nbid)
+  lib.registerContext({
+    id = 'arc_spawn_char_manager',
+    title = 'Character Manager',
+    options = {
+      {
+        title = 'Spawn Last Location',
+        description = 'Spawn at your characters last location.',
+        icon = 'fas fa-map-pin',
+        onSelect = function()
+          spawnPlayer(coords)
+        end,
+      },
+      {
+        title = 'Delete Character',
+        description = 'This will permantly delete your character!',
+        icon = 'fas fa-trash-can',
+        onSelect = function()
+          local shouldDelete = lib.alertDialog({
+            header = '**Are you sure you want to delete this character?**',
+            content = 'If you click *confirm* then all of your character progress will be **deleted!**',
+            centered = true,
+            cancel = true
+          })
+          if shouldDelete == 'confirm' then
+            -- call deelete
+            lib.callback.await('arc_core:server:deleteCharacter', false, nbid)
+          else
+            lib.showContext('arc_spawn_char_manager')
+          end
+        end,
+      },
+    },
+  })
+  lib.showContext('arc_spawn_char_manager')
+end
+
 local function CreateCharacterSelector(characters)
   local options = {}
 
@@ -77,12 +113,13 @@ local function CreateCharacterSelector(characters)
     local charData = json.decode(data.char_data)
 
     print(data.coords)
+    print(json.encode(data))
 
     table.insert(options, {
       title = charData.firstName .. " " .. charData.lastName, -- Fixed duplication issue
       description = 'Character NBID: ' .. data.nbid,
       onSelect = function()
-        spawnPlayer(json.decode(data.coords))
+        CreateCharacterManagerContext(json.decode(data.coords), data.nbid)
       end,
     })
   end
@@ -156,6 +193,10 @@ local function BaseSpawn()
     CreateCharacterSelector(characters)
   end
 end
+
+RegisterNetEvent('arc_core:client:deleteCharacter', function()
+  BaseSpawn()
+end)
 
 
 AddEventHandler('playerSpawned', function()
