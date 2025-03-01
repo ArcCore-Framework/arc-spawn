@@ -1,7 +1,10 @@
 local cam = nil
 
 local function spawnPlayer(coords)
+  exports.arc_hud:ShowUi()
+  DisplayRadar(true)
   local ped = PlayerPedId()
+
 
   DestroyCam(cam)
   ClearFocus()
@@ -48,8 +51,10 @@ local function SelectCharacterModel(input)
       { label = 'Confirm',        description = 'Confirm the selected model' }
     }
   }, function(selected, scrollIndex, args)
-        TriggerServerEvent('arc_core:server:createCharacter', input[1], input[2], Config.FreshSpawnCoords, Config.Models[curScoll])
-        spawnPlayer(Config.FreshSpawnCoords)
+      local newChar = lib.callback.await('arc_core:server:createCharacter', false, input[1], input[2], Config.FreshSpawnCoords, Config.Models[curScoll])
+      spawnPlayer(Config.FreshSpawnCoords)
+      TriggerServerEvent('arc_core:server:updateSrvId', newChar)
+      
 end)
 
   lib.showMenu('character_model_selection')
@@ -80,6 +85,7 @@ local function CreateCharacterManagerContext(coords, nbid)
         icon = 'fas fa-map-pin',
         onSelect = function()
           spawnPlayer(coords)
+          TriggerServerEvent('arc_core:server:updateSrvId', nbid)
         end,
       },
       {
@@ -142,6 +148,9 @@ local function CreateCharacterSelector(characters)
 end
 
 local function BaseSpawn()
+  exports.arc_hud:HideUi()
+  DisplayRadar(false)
+
   local ped = PlayerPedId()
 
   local camPos = vec4(502.77, 5626.79, 792.82, 5.21)
